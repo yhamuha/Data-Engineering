@@ -5,7 +5,7 @@ import numpy
 from datetime import datetime
 import lxml
 
-url = 'https://web.archive.org/web/20230908091635 /https://en.wikipedia.org/wiki/List_of_largest_banks'
+url = 'https://web.archive.org/web/20230908091635/https://en.wikipedia.org/wiki/List_of_largest_banks'
 table_attribs = ["Name", "MC_USD_Billion"]
 db_name = 'Banks.db'
 table_name = 'Largest_banks'
@@ -19,18 +19,25 @@ def log_progress(message):
         f.write(timestamp + ' : ' + message + '\n')
 
 def extract(url, table_attribs):
-    page = requests.get(url).text
-    data = BeautifulSoup(page,'html.parser')
+    page = requests.get(url)
+    data = BeautifulSoup(page.text, 'lxml')
+
     df = pd.DataFrame(columns=table_attribs)
     tables = data.find_all('tbody')
-    rows = tables[2].find_all('tr')
+
+    rows = tables[0].find_all('tr')
+
     for row in rows:
         col = row.find_all('td')
-        if len(col)!=0:
-                data_dict = {table_attribs[0]: col[1].a.contents[0],
-                             table_attribs[1]: col[2].contents[0]}
-                df1 = pd.DataFrame(data_dict, index=[0])
-                df = pd.concat([df,df1], ignore_index=True)
+
+        if len(col) > 2:
+            Name = col[1].get_text(strip=True)
+            MC_USD_Billion = col[2].get_text(strip=True).replace('\n', '')
+            print(Name, MC_USD_Billion)
+    return df
+
+def transform(df, csv_path):
+
     return df
 
 log_progress('Preliminaries complete. Initiating ETL process')
