@@ -25,15 +25,19 @@ def extract(url, table_attribs):
     df = pd.DataFrame(columns=table_attribs)
     tables = data.find_all('tbody')
 
+    if not tables:
+        print("No tables found.")
+        return df
+
     rows = tables[0].find_all('tr')
 
     for row in rows:
         col = row.find_all('td')
-
         if len(col) > 2:
             Name = col[1].get_text(strip=True)
             MC_USD_Billion = col[2].get_text(strip=True).replace('\n', '')
-            print(Name, MC_USD_Billion)
+            df = pd.concat([df, pd.DataFrame([[Name, MC_USD_Billion]], columns=table_attribs)], ignore_index=True)
+            df.index = range(1, len(df) + 1)
     return df
 
 def transform(df, csv_path):
